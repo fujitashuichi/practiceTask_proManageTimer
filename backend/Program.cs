@@ -28,6 +28,23 @@ app.MapPost("/tasks", (TaskItem task) =>
     }
 });
 
+app.MapPatch("/tasks/{id}", (Guid id) =>
+{
+    var task = TaskStore.Tasks.FirstOrDefault(task => task.Id == id) ?? null;
+    if (task == null)
+    {
+        return Results.NotFound("指定されたIDのタスクはありません。");
+    }
+
+    task.ToggleStatus();
+    return Results.Ok("タスクの状態が変更されました。");
+});
+
+app.MapDelete("/tasks/{id}", (Guid id) =>
+{
+    TaskStore.Tasks.RemoveAll(task => task.Id == id);
+});
+
 app.Run();
 
 
@@ -37,6 +54,12 @@ public class TaskItem
     public required string Title { get; set; }
     public double Hours { get; set; }
     public bool IsCompleted { get; set; }
+
+    public void ToggleStatus()
+    {
+        IsCompleted = !IsCompleted;
+        return;
+    }
 };
 
 public class TaskStore
