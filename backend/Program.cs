@@ -10,7 +10,7 @@ app.MapPost("/tasks", (TaskItem task) =>
 {
     if (task.Hours <= 0 || string.IsNullOrWhiteSpace(task.Title))
     {
-        return new string("無効なタスクデータです。タイトルは空でなく、時間は正の数である必要があります。");
+        return Results.BadRequest("無効なタスクデータです。タイトルは空でなく、時間は正の数である必要があります。");
     }
     try {
         TaskItem newTask = new()
@@ -21,10 +21,10 @@ app.MapPost("/tasks", (TaskItem task) =>
             IsCompleted = task.IsCompleted
         };
         TaskStore.Tasks.Add(newTask);
-        return new string("タスクは正常に追加されました");
+        return Results.Ok("タスクは正常に追加されました");
     } catch (Exception ex)
     {
-        return new string("タスクの追加に失敗しました: " + ex.Message);
+        return Results.Problem("タスクの追加に失敗しました: " + ex.Message);
     }
 });
 
@@ -33,7 +33,7 @@ app.Run();
 
 public class TaskItem
 {
-    public Guid Id = Guid.NewGuid();
+    public Guid Id { get; set; } = Guid.NewGuid();
     public required string Title { get; set; }
     public double Hours { get; set; }
     public bool IsCompleted { get; set; }
