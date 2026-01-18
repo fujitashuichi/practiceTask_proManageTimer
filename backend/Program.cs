@@ -1,5 +1,4 @@
 var builder = WebApplication.CreateBuilder(args);
-var app = builder.Build();
 
 builder.Services.AddCors(options =>
 {
@@ -10,6 +9,9 @@ builder.Services.AddCors(options =>
             .AllowAnyOrigin();
     });
 });
+
+var app = builder.Build();
+app.UseCors();
 
 app.MapGet("/tasks", () =>
 {
