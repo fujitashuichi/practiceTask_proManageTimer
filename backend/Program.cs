@@ -1,6 +1,16 @@
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowAnyOrigin();
+    });
+});
+
 app.MapGet("/tasks", () =>
 {
     return TaskStore.Tasks;
