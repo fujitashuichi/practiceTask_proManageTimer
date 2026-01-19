@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from 'react'
+import { useContext, useState, useEffect, useCallback } from 'react'
 import { PortContext } from "../contexts/PortContextType.ts"
 import type { taskItem } from '../types.ts';
 
@@ -7,25 +7,26 @@ function HomePage() {
     const [backendPort] = useContext(PortContext);
     const [tasks, setTasks] = useState<taskItem[]>([]);
 
-    useEffect(() => {
-        const fetchTasks = async () => {
-            try {
-                const response = await fetch("http://localhost:" + backendPort + "/tasks", {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                    }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    setTasks(data);
-                };
-            } catch (error) {
-                console.error("通信エラー: ", error);
+    const fetchTasks = useCallback(async () => {
+        try {
+            const response = await fetch("http://localhost:" + backendPort + "/tasks", {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setTasks(data);
             };
+        } catch (error) {
+            console.error("通信エラー: ", error);
         };
+    }, [backendPort]);
+
+    useEffect(() => {
         fetchTasks();
-    }, []);
+    }, [fetchTasks]);
 
     // 時間単位選択ボタン
     const [active, setActive] = useState<"h" | "m">("h");
@@ -82,7 +83,7 @@ function HomePage() {
                 method: "PATCH"
             });
             if (response.ok) {
-                window.location.reload();
+                fetchTasks();
             }
         } catch (error) {
             console.error("更新エラー:", error);
@@ -97,7 +98,7 @@ function HomePage() {
                 method: "DELETE"
             });
             if (response.ok) {
-                window.location.reload();
+                fetchTasks();
             }
         } catch (error) {
             console.error("削除エラー:", error);
