@@ -76,6 +76,34 @@ function HomePage() {
         }
     }
 
+    const toggleTask = async (id: string) => {
+        try {
+            const response = await fetch(`http://localhost:${backendPort}/tasks/${id}`, {
+                method: "PATCH"
+            });
+            if (response.ok) {
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error("更新エラー:", error);
+        }
+    };
+
+    const deleteTask = async (id: string) => {
+        if (!confirm("このタスクを削除しますか？")) return;
+
+        try {
+            const response = await fetch(`http://localhost:${backendPort}/tasks/${id}`, {
+                method: "DELETE"
+            });
+            if (response.ok) {
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error("削除エラー:", error);
+        }
+    };
+
     return (
         <div>
             <form action="">
@@ -100,7 +128,12 @@ function HomePage() {
                         <h2>{task.title}</h2>
                         <p>id: {task.id}</p>
                         <p>hours: {task.hours}</p>
-                        <p>isCompleted: {task.isCompleted ? "true" : "false"}</p>
+                        <button onClick={() => toggleTask(task.id)}>
+                            {task.isCompleted ? "未完了に戻す" : "完了する"}
+                        </button>
+                        <button onClick={() => deleteTask(task.id)} style={{ color: "red", marginLeft: "10px" }}>
+                            削除
+                        </button>
                     </div>
                 ))
             }
