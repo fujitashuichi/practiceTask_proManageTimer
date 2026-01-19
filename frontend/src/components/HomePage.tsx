@@ -42,10 +42,14 @@ function HomePage() {
     const [inputTime, setInputTime] = useState<string>("");
 
     const parsedTime = parseFloat(inputTime) || 0;
-    const newHours: number = active === "h" ? parsedTime : parsedTime / 60
+    const newHours: number = active === "h" ? parsedTime : parsedTime / 60;
 
     const sendTaskItem = async (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault();
+        if (tasks.some(taskItem => taskItem.title === newTitle)) {
+            alert("その名前のタスクは既に登録されています")
+        }
+
         const newTask = {
             Title: newTitle,
             Hours: newHours,
