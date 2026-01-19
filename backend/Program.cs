@@ -33,7 +33,7 @@ app.MapPost("/tasks", (TaskItem task) =>
             IsCompleted = task.IsCompleted
         };
         TaskStore.Tasks.Add(newTask);
-        return Results.Ok("タスクは正常に追加されました");
+        return Results.Ok(new { message = "タスクは正常に追加されました", createdTask = newTask });
     } catch (Exception ex)
     {
         return Results.Problem("タスクの追加に失敗しました: " + ex.Message);
