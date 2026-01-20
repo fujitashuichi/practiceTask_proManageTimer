@@ -49,6 +49,7 @@ function HomePage() {
         e.preventDefault();
         if (tasks.some(taskItem => taskItem.title === newTitle)) {
             alert("その名前のタスクは既に登録されています")
+            return;
         }
 
         const newTask = {

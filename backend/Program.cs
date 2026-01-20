@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
@@ -9,16 +11,17 @@ builder.Services.AddCors(options =>
             .AllowAnyOrigin();
     });
 });
+builder.Services.AddSqlite<AppDbContext>("Data Source=tasks.db");
 
 var app = builder.Build();
 app.UseCors();
 
-app.MapGet("/tasks", () =>
+app.MapGet("/tasks", async (AppDbContext db) =>
 {
-    return TaskStore.Tasks;
+    return await db.Tasks.ToListAsync();
 });
 
-app.MapPost("/tasks", (TaskItem task) =>
+app.MapPost("/tasks", async (AppDbContext db, TaskItem task) =>
 {
     if (task.Hours <= 0 || string.IsNullOrWhiteSpace(task.Title))
     {
@@ -32,7 +35,10 @@ app.MapPost("/tasks", (TaskItem task) =>
             Hours = task.Hours,
             IsCompleted = task.IsCompleted
         };
-        TaskStore.Tasks.Add(newTask);
+
+        db.Tasks.Add(newTask);
+        await db.SaveChangesAsync();
+
         return Results.Ok(new { message = "タスクは正常に追加されました", createdTask = newTask });
     } catch (Exception ex)
     {
@@ -40,21 +46,32 @@ app.MapPost("/tasks", (TaskItem task) =>
     }
 });
 
-app.MapPatch("/tasks/{id}", (Guid id) =>
+app.MapPatch("/tasks/{id}", async (AppDbContext db, Guid id) =>
 {
-    var task = TaskStore.Tasks.FirstOrDefault(task => task.Id == id) ?? null;
+    var task = await db.Tasks.FindAsync(id);
     if (task == null)
     {
         return Results.NotFound("指定されたIDのタスクはありません。");
     }
 
-    task.ToggleStatus();
+    task.IsCompleted = !task.IsCompleted;
+    await db.SaveChangesAsync();
+
     return Results.Ok("タスクの状態が変更されました。");
 });
 
-app.MapDelete("/tasks/{id}", (Guid id) =>
+app.MapDelete("/tasks/{id}", async (AppDbContext db, Guid id) =>
 {
-    TaskStore.Tasks.RemoveAll(task => task.Id == id);
+    try {
+        var task = await db.Tasks.FindAsync(id);
+        if (task is null) return Results.NotFound();
+        db.Tasks.Remove(task);
+        await db.SaveChangesAsync();
+        return Results.NoContent();
+    } catch (Exception ex)
+    {
+        return Results.InternalServerError("タスクの削除に失敗しました: " + ex.Message);
+    }
 });
 
 app.Run();
@@ -74,10 +91,9 @@ public class TaskItem
     }
 };
 
-public class TaskStore
+public class AppDbContext : DbContext
 {
-    public static List<TaskItem> Tasks = new([
-        new TaskItem { Title = "Dummy_1", Hours = 1.5, IsCompleted = false },
-        new TaskItem { Title = "Dummy_2", Hours = 2.0, IsCompleted = true }
-    ]);
-};
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) {  }
+
+    public DbSet<TaskItem> Tasks => Set<TaskItem>();
+}
